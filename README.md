@@ -16,18 +16,18 @@ Create a file named **quickgrate.json** in your project's root directory with th
 ```sh
 {
     "master": {
-        "host": "127.55.55.1",
+        "host": "127.0.0.1",
         "port": "3306",
         "user": "root",
         "password": "secret",
         "database": "prod"
     },
     "slave": {
-        "host": "127.55.55.1",
+        "host": "127.0.0.1",
         "port": "3306",
         "user": "root",
         "password": "secret",
-        "database": "prod"
+        "database": "dev"
     },
     "rows_limit": 25000,
     "tables": {
@@ -44,4 +44,4 @@ npx quickgrate
 
 ## Development
 
-Want to contribute? I am grateful for any contribution, feel free to code it or write to me!
+Want to contribute? I am grateful for any contribution, feel free to code it or message me!
