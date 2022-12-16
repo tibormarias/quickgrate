@@ -12,27 +12,27 @@ Install the package
 npm install @tibormarias/quickgrate --save-dev
 ```
 
-Create a file named **quickgrate.json** in your project's root directory with the following structure
+Create a file named **quickgrate.config.js** in your project's root directory with the following structure
 ```sh
-{
-    "master": {
-        "host": "127.0.0.1",
-        "port": "3306",
-        "user": "root",
-        "password": "secret",
-        "database": "prod"
+module.exports = {
+    master: {
+        host: "127.0.0.1",
+        port: "3306",
+        user: "user",
+        password: "pass",
+        database: "production",
     },
-    "slave": {
-        "host": "127.0.0.1",
-        "port": "3306",
-        "user": "root",
-        "password": "secret",
-        "database": "dev"
+    slave: {
+        host: "127.0.0.1",
+        port: "3306",
+        user: "user",
+        password: "pass",
+        database: "development"
     },
-    "rows_limit": 25000,
-    "tables": {
-        "do_not_create": [], 
-        "do_not_seed": []
+    rows_limit: 25000,
+    tables: {
+        do_not_create: [],
+        do_not_seed: []
     }
 }
 ```
