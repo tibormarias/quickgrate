@@ -1,8 +1,8 @@
 # Quickgrate
-## A fast and easy mysqldump NodeJS alternative 
+## A fast and easy way to copy and seed one MySQL database to another 
 
 ### What does it do?
-Quickgrate copies table stuctures and table contents from a master database to a slave database. **Be careful, it deletes existing tables on slave!**
+Quickgrate copies table stuctures and table contents from a master database to a slave database. I use it in order to have production data in my dev environments for real world testing purposes. **Be careful, it deletes existing tables on slave!**
 
 ### Installation
 
