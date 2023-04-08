@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 const config = require(process.cwd() + '/quickgrate.config.js');
 
-async function quickgrate() {
+export async function quickgrate() {
     const master = await new mysql.createConnection(config.master)
     const slave = await new mysql.createConnection(config.slave)
 
@@ -40,5 +40,3 @@ async function quickgrate() {
         }
     }
 }
-
-quickgrate();
