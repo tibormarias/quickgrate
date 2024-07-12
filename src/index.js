@@ -28,8 +28,8 @@ export async function quickgrate() {
     let [tables] = await master.query('SHOW TABLES');
     let [slaveTables] = await slave.query('SHOW TABLES');
 
-    tables = tables.map(x => Object.values(x)[0]).filter(x => !config.tables.do_not_create.includes(x));
-    slaveTables = slaveTables.map(x => Object.values(x)[0]).filter(x => !config.tables.do_not_create.includes(x));
+    tables = tables.map(x => Object.values(x)[0]).filter(x => !config.default.tables.do_not_create.includes(x));
+    slaveTables = slaveTables.map(x => Object.values(x)[0]).filter(x => !config.default.tables.do_not_create.includes(x));
 
     let percentage = 0;
     for (const [i, table] of tables.entries()) {
@@ -62,7 +62,7 @@ export async function quickgrate() {
 
         await slave.query(response[0]['Create Table']);
 
-        if (!config.tables.do_not_seed.includes(table)) {
+        if (!config.default.tables.do_not_seed.includes(table)) {
             await seed(table);
             console.log(`${percentage}% - ${table} seeded`);
         } else {
@@ -77,7 +77,7 @@ export async function quickgrate() {
     }
 
     async function seed(table) {
-        let [rows] = await master.query({ sql: "SELECT * FROM ?? LIMIT ?", rowsAsArray: true }, [table, config.rows_limit]);
+        let [rows] = await master.query({ sql: "SELECT * FROM ?? LIMIT ?", rowsAsArray: true }, [table, config.default.rows_limit]);
 
         if (rows.length > 0) {
             await slave.query("INSERT INTO ?? VALUES ?", [table, rows]);
