@@ -14,7 +14,7 @@ npm install @tibormarias/quickgrate --save-dev
 
 Create a file named **quickgrate.config.js** in your project's root directory with the following structure
 ```sh
-module.exports = {
+export default {
     master: {
         host: "127.0.0.1",
         port: "3306",
@@ -41,6 +41,9 @@ module.exports = {
 ```
 npx quickgrate
 ```
+
+## Optional flags
+`--changes` only remove and seed tables that are different on slave then on master
 
 ## Development
 

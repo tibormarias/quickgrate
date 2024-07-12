@@ -1,21 +1,65 @@
-const mysql = require('mysql2/promise');
-const config = require(process.cwd() + '/quickgrate.config.js');
+import path from 'path';
+
+// Construct the path to the configuration file in the project's root directory
+const configPath = path.resolve(process.cwd(), 'quickgrate.config.js');
+const config = await import(configPath);
+
+// Your existing code
+import mysql from 'mysql2/promise';
 
 export async function quickgrate() {
-    const master = await new mysql.createConnection(config.master)
-    const slave = await new mysql.createConnection(config.slave)
+    const master = await new mysql.createConnection(config.default.master)
+    const slave = await new mysql.createConnection(config.default.slave)
+
+    const changes = process.argv.find(x => x === '--changes');
+
+    const [masterVersion] = await master.query('SELECT VERSION()');
+    const [slaveVersion] = await slave.query('SELECT VERSION()');
+
+    if (masterVersion[0]['VERSION()'] !== slaveVersion[0]['VERSION()']) {
+        console.log(`Warning: master and slave db versions do not match!`);
+        console.log(`Master: ${masterVersion[0]['VERSION()']}`);
+        console.log(`Slave: ${slaveVersion[0]['VERSION()']}`);
+        console.log(`Continuing...`);
+    }
 
     await slave.query('SET foreign_key_checks = 0');
 
     let [tables] = await master.query('SHOW TABLES');
+    let [slaveTables] = await slave.query('SHOW TABLES');
+
     tables = tables.map(x => Object.values(x)[0]).filter(x => !config.tables.do_not_create.includes(x));
-    
+    slaveTables = slaveTables.map(x => Object.values(x)[0]).filter(x => !config.tables.do_not_create.includes(x));
+
     let percentage = 0;
     for (const [i, table] of tables.entries()) {
         percentage = Math.floor(i / (tables.length - 1) * 100)
-        await slave.query('DROP TABLE IF EXISTS ??', [table]);
 
         let [response] = await master.query('SHOW CREATE TABLE ??', [table]);
+
+        let responseSlave = [];
+
+        for (const [y, slaveTable] of slaveTables.entries()) {
+            if (slaveTable === table) {
+                [responseSlave] = await slave.query('SHOW CREATE TABLE ??', [table]);
+                slaveTables.splice(y, 1);
+                break;
+            }
+        }
+
+        if (changes && responseSlave.length > 0 && normalizedStructure(responseSlave[0]['Create Table']) === normalizedStructure(response[0]['Create Table'])) {
+            console.log(`${percentage}% - ${table} skipped`);
+
+            if (percentage === 100) {
+                await slave.query('SET foreign_key_checks = 1');
+                console.log(`${tables.length} tables were created succsessfully!`)
+                process.exit();
+            }
+            continue;
+        } else {
+            await slave.query('DROP TABLE IF EXISTS ??', [table]);
+        }
+
         await slave.query(response[0]['Create Table']);
 
         if (!config.tables.do_not_seed.includes(table)) {
@@ -25,7 +69,7 @@ export async function quickgrate() {
             console.log(`${percentage}% - ${table} created`);
         }
 
-        if (i === tables.length - 1) {
+        if (percentage === 100) {
             await slave.query('SET foreign_key_checks = 1');
             console.log(`${tables.length} tables were created succsessfully!`)
             process.exit();
@@ -38,5 +82,20 @@ export async function quickgrate() {
         if (rows.length > 0) {
             await slave.query("INSERT INTO ?? VALUES ?", [table, rows]);
         }
+    }
+
+    function normalizedStructure(sql) {
+        const openingParenthesisIndex = sql.indexOf('(');
+        const closingParenthesisIndex = sql.lastIndexOf(')');
+        
+        if (openingParenthesisIndex === -1 || closingParenthesisIndex === -1 || openingParenthesisIndex > closingParenthesisIndex) {
+            throw new Error('Invalid SQL: Unable to find valid table structure.');
+        }
+
+        const tableStructurePart = sql.substring(openingParenthesisIndex + 1, closingParenthesisIndex);
+
+        const normalizedStructure = tableStructurePart.trim().replace(/\s+/g, ' ');
+
+        return normalizedStructure;
     }
 }
