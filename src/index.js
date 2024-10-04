@@ -12,12 +12,18 @@ export async function quickgrate() {
     const slave = await new mysql.createConnection(config.default.slave)
 
     const changes = process.argv.find(x => x === '--changes');
+    const onlyTables = process.argv.find(x => x.startsWith('--table='));
+
+    let selectedTables = [];
+    if (onlyTables) {
+        selectedTables = onlyTables.split('=')[1].split(',');
+    }
 
     const [masterVersion] = await master.query('SELECT VERSION()');
     const [slaveVersion] = await slave.query('SELECT VERSION()');
 
     if (masterVersion[0]['VERSION()'] !== slaveVersion[0]['VERSION()']) {
-        console.log(`Warning: master and slave db versions do not match!`);
+        console.log(`Warning: master and slave db versions do not match, skipping tables might not work!`);
         console.log(`Master: ${masterVersion[0]['VERSION()']}`);
         console.log(`Slave: ${slaveVersion[0]['VERSION()']}`);
         console.log(`Continuing...`);
@@ -28,7 +34,7 @@ export async function quickgrate() {
     let [tables] = await master.query('SHOW TABLES');
     let [slaveTables] = await slave.query('SHOW TABLES');
 
-    tables = tables.map(x => Object.values(x)[0]).filter(x => !config.default.tables.do_not_create.includes(x));
+    tables = tables.map(x => Object.values(x)[0]).filter(x => !config.default.tables.do_not_create.includes(x) && (selectedTables.length === 0 || selectedTables.includes(x)));
     slaveTables = slaveTables.map(x => Object.values(x)[0]).filter(x => !config.default.tables.do_not_create.includes(x));
 
     let percentage = 0;
