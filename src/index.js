@@ -12,7 +12,7 @@ export async function quickgrate() {
     const slave = await new mysql.createConnection(config.default.slave)
 
     const changes = process.argv.find(x => x === '--changes');
-    const onlyTables = process.argv.find(x => x.startsWith('--table='));
+    const onlyTables = process.argv.find(x => x.startsWith('--tables='));
 
     let selectedTables = [];
     if (onlyTables) {
@@ -39,8 +39,12 @@ export async function quickgrate() {
 
     let percentage = 0;
     for (const [i, table] of tables.entries()) {
-        percentage = Math.floor(i / (tables.length - 1) * 100)
-
+        if(selectedTables.length > 0) {
+            percentage = Math.floor(i / (selectedTables.length) * 100)
+        } else {
+            percentage = Math.floor(i / (tables.length - 1) * 100)
+        }
+        
         let [response] = await master.query('SHOW CREATE TABLE ??', [table]);
 
         let responseSlave = [];
