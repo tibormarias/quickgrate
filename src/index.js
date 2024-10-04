@@ -40,11 +40,11 @@ export async function quickgrate() {
     let percentage = 0;
     for (const [i, table] of tables.entries()) {
         if(selectedTables.length > 0) {
-            percentage = Math.floor(i / (selectedTables.length) * 100)
+            percentage = Math.floor((i + 1) / (selectedTables.length) * 100)
         } else {
-            percentage = Math.floor(i / (tables.length - 1) * 100)
+            percentage = Math.floor((i + 1) / (tables.length) * 100)
         }
-        
+
         let [response] = await master.query('SHOW CREATE TABLE ??', [table]);
 
         let responseSlave = [];
